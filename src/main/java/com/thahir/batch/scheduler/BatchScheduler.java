@@ -23,7 +23,7 @@ public class BatchScheduler {
      */
 
     //@Scheduled(cron = "0 0 1 1 * *") // run every 1st of the month at 1:00 AM
-    @Scheduled(cron = "0 55 11 * * ?") // run every day at 11:55 AM
+    @Scheduled(cron = "0 24 12 * * ?") // run every day at 11:55 AM
     public void runBatchJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()

@@ -43,8 +43,8 @@ public class ExcelWriter implements ItemWriter<FormattedCustomer> {
     @Value("${email.subject:Customer Report}")
     private String emailSubject;
 
-    @Value("${email.body:Please find attached the customer report.}")
-    private String emailBody;
+    @Value("${email.body:Dear %s,\n\nPlease find attached the customer report generated on %s.\n\nBest regards,\nYour Company}")
+    private String EMAIL_BODY_TEMPLATE;
 
     @Override
     public void write(Chunk<? extends FormattedCustomer> chunk) throws Exception {
@@ -94,11 +94,13 @@ public class ExcelWriter implements ItemWriter<FormattedCustomer> {
                 logger.info("Successfully created Excel file at: {}", filePath);
             }
 
+            String formattedEmailBody = String.format(EMAIL_BODY_TEMPLATE, "Customer", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
             // Send email with attachment
             emailService.sendEmailWithAttachment(
                     emailRecipient,
                     emailSubject,
-                    emailBody,
+                    formattedEmailBody,
                     filePath.toString()
             );
 
