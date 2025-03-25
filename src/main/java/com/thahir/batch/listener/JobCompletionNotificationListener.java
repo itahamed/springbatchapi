@@ -13,13 +13,6 @@ import org.springframework.stereotype.Component;
 public class JobCompletionNotificationListener implements JobExecutionListener {
 
     private static final Logger log = LoggerFactory.getLogger(JobCompletionNotificationListener.class);
-    
-    private final JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public JobCompletionNotificationListener(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
@@ -34,30 +27,7 @@ public class JobCompletionNotificationListener implements JobExecutionListener {
             log.info("!!! JOB {} FINISHED! Time: {}", 
                      jobExecution.getJobInstance().getJobName(),
                      jobExecution.getEndTime());
-            
-            String jobName = jobExecution.getJobInstance().getJobName();
-            
-            if ("customerJob".equals(jobName)) {
-                log.info("!!! Customers processed:");
-                jdbcTemplate.query("SELECT id, first_name, last_name, email FROM customers",
-                    (rs, row) -> new String(
-                        rs.getLong(1) + " " + 
-                        rs.getString(2) + " " + 
-                        rs.getString(3) + " " +
-                        rs.getString(4))
-                ).forEach(log::info);
-            } else if ("productJob".equals(jobName)) {
-                log.info("!!! Products processed:");
-                jdbcTemplate.query("SELECT id, name, price, stock FROM products",
-                    (rs, row) -> new String(
-                        rs.getLong(1) + " " + 
-                        rs.getString(2) + " " + 
-                        rs.getBigDecimal(3) + " " +
-                        rs.getInt(4))
-                ).forEach(log::info);
-            }
+
         }
-        // Terminate the application
-      //  System.exit(0);
     }
 }
