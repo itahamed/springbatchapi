@@ -5,11 +5,12 @@ import com.thahir.batch.model.Customer;
 import com.thahir.batch.model.FormattedCustomer;
 import com.thahir.batch.processor.CustomerProcessor;
 import com.thahir.batch.writer.ExcelWriter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.context.annotation.Bean;
@@ -20,21 +21,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 
 @Configuration
+@EnableBatchProcessing
+@RequiredArgsConstructor
 public class BatchConfiguration {
 
+    private final JobBuilderFactory jobBuilderFactory;
+    private final StepBuilderFactory stepBuilderFactory;
     private final DataSource dataSource;
-    private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
-
-    private ExcelWriter excelWriter;
-
-    public BatchConfiguration(DataSource dataSource, JobRepository jobRepository,
-                              PlatformTransactionManager transactionManager) {
-        this.dataSource = dataSource;
-        this.jobRepository = jobRepository;
-        this.transactionManager = transactionManager;
-
-    }
 
     @Bean
     public JdbcCursorItemReader<Customer> reader() {
@@ -65,27 +59,23 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public ExcelWriter write() {
-        if (excelWriter == null) {
-            excelWriter = new ExcelWriter();
-        }
-        return excelWriter;
+    public ExcelWriter writer() {
+        return new ExcelWriter();
     }
 
     @Bean
     public Step processCustomersStep() {
-        return new StepBuilder("processCustomersStep", jobRepository)
-                .<Customer, FormattedCustomer>chunk(Integer.MAX_VALUE, transactionManager)
+        return stepBuilderFactory.get("processCustomersStep")
+                .<Customer, FormattedCustomer>chunk(Integer.MAX_VALUE)
                 .reader(reader())
                 .processor(processor())
-                .writer(write())
+                .writer(writer())
                 .build();
     }
 
     @Bean
-    public Job exportCustomerJob(JobCompletionNotificationListener listener, Step processCustomersStep) {
-        return new JobBuilder("exportCustomerJob", jobRepository)
-                .listener(listener)
+    public Job exportCustomerJob(Step processCustomersStep) {
+        return jobBuilderFactory.get("exportCustomerJob")
                 .start(processCustomersStep)
                 .build();
     }

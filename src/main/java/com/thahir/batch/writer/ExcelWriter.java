@@ -7,7 +7,6 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Component
 public class ExcelWriter implements ItemWriter<FormattedCustomer> {
@@ -45,9 +45,10 @@ public class ExcelWriter implements ItemWriter<FormattedCustomer> {
     @Value("${email.body:Dear %s,\n\nPlease find attached the customer report generated on %s.\n\nBest regards,\nYour Company}")
     private String EMAIL_BODY_TEMPLATE;
 
+
     @Override
-    public void write(Chunk<? extends FormattedCustomer> chunk) throws Exception {
-        if (chunk.isEmpty()) {
+    public void write(List<? extends FormattedCustomer> list) throws Exception {
+        if (list.isEmpty()) {
             logger.info("No customers to write to Excel file");
             return;
         }
@@ -56,7 +57,7 @@ public class ExcelWriter implements ItemWriter<FormattedCustomer> {
         Path outputPath = prepareOutputDirectory();
         Path filePath = outputPath.resolve(filename);
 
-        logger.info("Writing {} customers to Excel file: {}", chunk.size(), filePath);
+        logger.info("Writing {} customers to Excel file: {}", list.size(), filePath);
 
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Customers");
@@ -74,7 +75,7 @@ public class ExcelWriter implements ItemWriter<FormattedCustomer> {
 
             // Populate data rows
             int rowNum = 1;
-            for (FormattedCustomer customer : chunk) {
+            for (FormattedCustomer customer : list) {
                 Row row = sheet.createRow(rowNum++);
                 populateCustomerRow(row, customer);
             }
@@ -152,5 +153,6 @@ public class ExcelWriter implements ItemWriter<FormattedCustomer> {
         }
         return directory;
     }
+
 
 }

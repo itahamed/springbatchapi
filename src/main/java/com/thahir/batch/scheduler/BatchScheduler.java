@@ -17,11 +17,6 @@ public class BatchScheduler {
     @Autowired
     private Job exportCustomerJob;
 
-    /**
-     * Schedule the batch job to run every day at
-     * The cron expression format is: second minute hour day-of-month month day-of-week
-     */
-
     //@Scheduled(cron = "0 0 1 1 * *") // run every 1st of the month at 1:00 AM
     @Scheduled(cron = "0 24 12 * * ?") // run every day at 11:55 AM
     public void runBatchJob() {
